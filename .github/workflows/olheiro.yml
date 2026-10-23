@@ -7,7 +7,7 @@ on:
     inputs:
       checar:
         description: Normas existentes rechecadas nesta rodada
-        default: "6000"
+        default: "20000"
 
 concurrency:
   group: olheiro
@@ -49,7 +49,7 @@ jobs:
         run: |
           git config user.name "Olheiro"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python3 -I scripts/olheiro.py --commit --checar "${{ inputs.checar || 6000 }}" --minutos 300
+          python3 -I scripts/olheiro.py --commit --checar "${{ inputs.checar || 20000 }}" --minutos 300
 
       - name: Envia os commits
         if: always()
