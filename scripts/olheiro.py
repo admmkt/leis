@@ -11,7 +11,7 @@
 Cada mudança vira um commit próprio. O estado (SHA e data da última checagem) fica em
 `federal/_indice/olheiro/estado.json`, fora do git, guardado pelo cache do Actions; se sumir, é refeito.
 
-    python3 -I scripts/olheiro.py [--checar 6000] [--minutos 300] [--rps 3] [--commit]
+    python3 -I scripts/olheiro.py [--checar 20000] [--minutos 300] [--rps 3] [--commit]
 """
 import argparse
 import datetime as dt
@@ -240,7 +240,7 @@ def salvar(estado):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--checar", type=int, default=6000, help="normas existentes rechecadas por rodada")
+    ap.add_argument("--checar", type=int, default=20000, help="normas existentes rechecadas por rodada")
     ap.add_argument("--minutos", type=float, default=300, help="orçamento de tempo da rodada")
     ap.add_argument("--rps", type=float, default=3)
     ap.add_argument("--workers", type=int, default=3)
