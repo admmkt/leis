@@ -5,6 +5,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import olheiro  # noqa: E402
+import olheiro_estados  # noqa: E402
 
 
 class TestOlheiro(unittest.TestCase):
@@ -27,6 +28,18 @@ class TestOlheiro(unittest.TestCase):
             self.assertEqual(olheiro.relevante(a), olheiro.relevante(b))
             self.assertNotEqual(olheiro.relevante(a), olheiro.relevante(c))
             self.assertEqual(olheiro.sha_do_cabecalho(a), "a" * 64)
+
+    def test_janela_estadual_acima_do_maior_publicado(self):
+        ce = olheiro_estados.argumentos("CE", ["estaduais/CE/leis-ordinarias/1974/lei-9853-1974-id9535.md",
+                                              "estaduais/CE/leis-ordinarias/2026/lei-19000-2026-id12990.md"])
+        self.assertEqual(ce[0], "ce.py")
+        self.assertTrue(ce[1].startswith("12991,") and ce[1].endswith(str(12990 + olheiro_estados.JANELA)))
+        ma = olheiro_estados.argumentos("MA", ["estaduais/MA/leis-ordinarias/2026/lei-13400-2026.md",
+                                              "estaduais/MA/leis-complementares/2026/lc-280-2026.md"])[1].split(",")
+        self.assertIn("LEI_13401", ma)
+        self.assertIn("LC_281", ma)
+        self.assertIn("EC_1", ma)  # nenhum EC publicado: janela começa do 1
+        self.assertNotIn("LEI_13400", ma)
 
 
 if __name__ == "__main__":
