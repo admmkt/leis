@@ -6,8 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       checar:
-        description: Normas existentes rechecadas nesta rodada
+        description: Normas federais existentes rechecadas nesta rodada
         default: "20000"
+      ufs:
+        description: Estados a coletar (JSON), ex. ["SP","DF"]; vazio = todos
+        default: ""
 
 concurrency:
   group: olheiro
@@ -16,17 +19,21 @@ concurrency:
 permissions:
   contents: write
 
+env:
+  # o envio tenta de novo porque federal e estados publicam em paralelo na mesma branch
+  ENVIAR: |
+    for i in 1 2 3 4 5; do
+      git push origin HEAD:main && exit 0
+      git pull --rebase --depth=50 origin main || git rebase --abort
+      sleep $((i * 10))
+    done
+    exit 1
+
 jobs:
-  olheiro:
+  federal:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
-      - name: Puxa as atualizações do repositório original
-        continue-on-error: true # conflito não pode impedir a rodada; aparece como aviso no Actions
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${{ github.repository }}/merge-upstream" -f branch=main
-
       - uses: actions/checkout@v4
         with:
           ref: main
@@ -45,7 +52,7 @@ jobs:
 
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
 
-      - name: Roda o olheiro
+      - name: Roda o olheiro federal
         run: |
           git config user.name "Olheiro"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -53,10 +60,55 @@ jobs:
 
       - name: Envia os commits
         if: always()
-        run: git push origin HEAD:main
+        run: bash -c "$ENVIAR"
 
       - uses: actions/cache/save@v4
         if: always()
         with:
           path: federal/_indice
           key: olheiro-${{ github.run_id }}
+
+  estados:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        uf: ${{ fromJSON(inputs.ufs || '["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"]') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /estaduais/${{ matrix.uf }}/
+            !/estaduais/${{ matrix.uf }}/_fonte/
+
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils tesseract-ocr
+
+      - uses: actions/cache@v4
+        with:
+          path: scripts/bin/tessdata
+          key: tessdata-por-best
+
+      - name: Prepara o OCR (Tesseract no lugar do Vision do macOS)
+        run: |
+          mkdir -p scripts/bin/tessdata
+          modelo=scripts/bin/tessdata/por.traineddata
+          [ -f "$modelo" ] || curl -sSfL -o "$modelo" https://raw.githubusercontent.com/tesseract-ocr/tessdata_best/main/por.traineddata
+          echo "711de9dbb8052067bd42f16b9119967f30bada80d57e2ef24f65d09f531adb04  $modelo" | sha256sum -c -
+          install -m 755 scripts/ocr_linux.sh scripts/bin/ocr
+
+      - name: Coleta ${{ matrix.uf }}
+        run: |
+          git config user.name "Olheiro"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 -I scripts/olheiro_estados.py "${{ matrix.uf }}" --commit --minutos 45
+
+      - name: Envia os commits
+        if: always()
+        run: bash -c "$ENVIAR"
