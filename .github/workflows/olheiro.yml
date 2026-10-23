@@ -43,7 +43,7 @@ jobs:
           key: olheiro-${{ github.run_id }}
           restore-keys: olheiro-
 
-      - run: sudo apt-get install -y -qq poppler-utils
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
 
       - name: Roda o olheiro
         run: |
