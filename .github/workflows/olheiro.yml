@@ -1,0 +1,62 @@
+name: Olheiro
+
+on:
+  schedule:
+    - cron: "17 23 * * *" # 20h17 em Brasília, depois do DOU do dia
+  workflow_dispatch:
+    inputs:
+      checar:
+        description: Normas existentes rechecadas nesta rodada
+        default: "6000"
+
+concurrency:
+  group: olheiro
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  olheiro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Puxa as atualizações do repositório original
+        continue-on-error: true # conflito não pode impedir a rodada; aparece como aviso no Actions
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/merge-upstream" -f branch=main
+
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            scripts
+            fonte
+            federal
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: federal/_indice
+          key: olheiro-${{ github.run_id }}
+          restore-keys: olheiro-
+
+      - run: sudo apt-get install -y -qq poppler-utils
+
+      - name: Roda o olheiro
+        run: |
+          git config user.name "Olheiro"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 -I scripts/olheiro.py --commit --checar "${{ inputs.checar || 6000 }}" --minutos 300
+
+      - name: Envia os commits
+        if: always()
+        run: git push origin HEAD:main
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: federal/_indice
+          key: olheiro-${{ github.run_id }}
