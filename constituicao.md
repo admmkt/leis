@@ -1,6 +1,6 @@
 # Constituição da República Federativa do Brasil de 1988
 
-> Fonte: [texto compilado do Planalto](https://www.planalto.gov.br/ccivil_03/constituicao/constituicaocompilado.htm), obtido em 2026-10-20. Redações tachadas foram omitidas; indicações de revogação, vigência e decisões judiciais foram preservadas. A compilação não dispensa a consulta às regras de transição e de produção de efeitos das emendas.
+> Fonte: [texto compilado do Planalto](https://www.planalto.gov.br/ccivil_03/constituicao/constituicaocompilado.htm), obtido em 2026-10-23. Redações tachadas foram omitidas; indicações de revogação, vigência e decisões judiciais foram preservadas. A compilação não dispensa a consulta às regras de transição e de produção de efeitos das emendas.
 
 > No art. 7º, a EC 141/2026 prevê implementação gradual da jornada semanal (art. 6º) e vigência diferida da alteração do inciso XV (art. 10, I). Consulte as [regras e prazos da emenda](https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc141.htm); a redação de 40 horas no inciso XIII não significa aplicação imediata desse limite a todos os contratos.
 
