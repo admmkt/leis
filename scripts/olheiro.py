@@ -9,7 +9,7 @@
    porque o texto compilado costuma demorar alguns dias para sair.
 
 Cada mudança vira um commit próprio. O estado (SHA e data da última checagem) fica em
-`federal/_indice/olheiro.json`, fora do git, guardado pelo cache do Actions; se sumir, é refeito.
+`federal/_indice/olheiro/estado.json`, fora do git, guardado pelo cache do Actions; se sumir, é refeito.
 
     python3 -I scripts/olheiro.py [--checar 6000] [--minutos 300] [--rps 3] [--commit]
 """
@@ -31,7 +31,8 @@ import baixar_federal as bf  # noqa: E402
 
 RAIZ_REPO = os.path.dirname(bf.RAIZ)
 SCRIPTS = os.path.dirname(os.path.abspath(__file__))
-ESTADO = os.path.join(bf.RAIZ, "_indice", "olheiro.json")
+# subpasta: carregar_indice lê todo .json solto em _indice como índice
+ESTADO = os.path.join(bf.RAIZ, "_indice", "olheiro", "estado.json")
 CONSTITUICAO_META = os.path.join(RAIZ_REPO, "fonte", "constituicao-compilado.json")
 CONSTITUICAO_HTM = os.path.join(RAIZ_REPO, "fonte", "constituicao-compilado.htm")
 CAMPOS = ("titulo", "tipo", "numero", "data", "ementa", "revogada", "versao_texto", "urn")
@@ -228,6 +229,7 @@ def alteracoes(itens, criadas, estado, n, prazo, workers, ativo):
 
 
 def salvar(estado):
+    os.makedirs(os.path.dirname(ESTADO), exist_ok=True)
     tmp = ESTADO + ".tmp"
     with TRAVA:
         texto = json.dumps(estado, ensure_ascii=False)
@@ -251,6 +253,10 @@ def main():
         ok = constituicao(a.commit)
     except Exception as e:
         print("::warning::Constituição não verificada:", e)
+    antigo = os.path.join(bf.RAIZ, "_indice", "olheiro.json")
+    if os.path.exists(antigo):  # local da primeira versão
+        os.makedirs(os.path.dirname(ESTADO), exist_ok=True)
+        os.replace(antigo, ESTADO)
     atualizar_indice()
     itens = bf.carregar_indice(set())
     estado = json.load(open(ESTADO, encoding="utf-8")) if os.path.exists(ESTADO) else {}
