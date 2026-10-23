@@ -116,7 +116,8 @@ def main():
     args = argumentos(a.uf, publicados(a.uf))
     print(f"[{a.uf}] coletor:", " ".join(args)[:200], flush=True)
     try:
-        r = subprocess.run([sys.executable, "-I", os.path.join(ESTADOS, args[0]), *args[1:]], timeout=a.minutos * 60)
+        # sem -I: os coletores importam módulos vizinhos de scripts/estados/
+        r = subprocess.run([sys.executable, os.path.join(ESTADOS, args[0]), *args[1:]], timeout=a.minutos * 60)
         codigo = r.returncode
     except subprocess.TimeoutExpired:
         print(f"[{a.uf}] tempo esgotado; grava o que já foi coletado", flush=True)
