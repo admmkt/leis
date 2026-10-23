@@ -87,7 +87,8 @@ def constituicao(ativo):
     if sha == meta["sha256"]:
         print("Constituição sem mudança")
         return True
-    backup = (open(CONSTITUICAO_HTM, "rb").read(), open(CONSTITUICAO_META, "rb").read())
+    destino = os.path.join(RAIZ_REPO, "constituicao.md")
+    backup = (open(CONSTITUICAO_HTM, "rb").read(), open(CONSTITUICAO_META, "rb").read(), open(destino, "rb").read())
     open(CONSTITUICAO_HTM, "wb").write(bruto)
     meta.update(sha256=sha, obtido_em=HOJE)
     with open(CONSTITUICAO_META, "w", encoding="utf-8") as f:
@@ -100,6 +101,13 @@ def constituicao(ativo):
         open(CONSTITUICAO_META, "wb").write(backup[1])
         print("::warning::Constituição mudou no Planalto, mas o conversor falhou:", r.stderr[-500:])
         return False
+    sem_data = lambda t: re.sub(rb"obtido em \d{4}-\d{2}-\d{2}", b"", t)
+    if sem_data(open(destino, "rb").read()) == sem_data(backup[2]):
+        # a página muda bytes todo dia sem mudar o texto: não vale commit
+        for caminho, conteudo in zip((CONSTITUICAO_HTM, CONSTITUICAO_META, destino), backup):
+            open(caminho, "wb").write(conteudo)
+        print("Constituição sem mudança no texto")
+        return True
     commit(["constituicao.md", "fonte"], "Atualiza a Constituição Federal (texto compilado do Planalto)", ativo)
     return True
 
